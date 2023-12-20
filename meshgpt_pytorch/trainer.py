@@ -391,6 +391,7 @@ class MeshAutoencoderTrainer(Module):
             self.wait()
 
         self.print('training complete')
+        
     def train(self, num_epochs, stop_at_loss = None, diplay_graph = False):
         epoch_losses = []  # Initialize a list to store epoch losses
         self.model.train() 

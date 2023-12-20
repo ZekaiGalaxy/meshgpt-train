@@ -83,7 +83,7 @@ transformer = MeshTransformer(
 )
 
 autoencoder_trainer = MeshAutoencoderTrainer(model = autoencoder,learning_rate = 1e-3, warmup_steps = 10,dataset = dataset,batch_size=1,grad_accum_every=1,num_train_steps=1)
-autoencoder_trainer.train(10,True)
+autoencoder_trainer.train(100,True)
 
 max_length =  max(len(d["faces"]) for d in dataset if "faces" in d)
 max_seq =  max_length * 6
