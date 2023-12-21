@@ -30,7 +30,7 @@ def process_obj(obj_file):
 # obj_data = {"texts": "chair", "vertices": vertices, "faces": faces} 
 obj_data = []
 object_path = "/f_ndata/zekai/ShapeNet/ShapeNetCore.v2/03001627"
-for checklist in tqdm(os.listdir(object_path)):
+for checklist in tqdm(os.listdir(object_path)[:500]):
     path = os.path.join(object_path, checklist, "models/model_normalized.obj")
     obj_file = open(path,'r').read()
     vertices, meshes = process_obj(obj_file)
