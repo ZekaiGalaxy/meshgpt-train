@@ -82,20 +82,20 @@ transformer = MeshTransformer(
     max_seq_len = 768
 )
 
-autoencoder_trainer = MeshAutoencoderTrainer(model = autoencoder,learning_rate = 1e-3, warmup_steps = 10,dataset = dataset,batch_size=1,grad_accum_every=1,num_train_steps=1)
+autoencoder_trainer = MeshAutoencoderTrainer(model = autoencoder,learning_rate = 1e-5, warmup_steps = 0,dataset = dataset,batch_size=4,grad_accum_every=1,num_train_steps=1)
 autoencoder_trainer.train(100,True)
 
-max_length =  max(len(d["faces"]) for d in dataset if "faces" in d)
-max_seq =  max_length * 6
-print(max_length)
-print(max_seq)
-transformer = MeshTransformer(
-    autoencoder,
-    dim = 16,
-    max_seq_len = max_seq,
-    #condition_on_text = True
-)
+# max_length =  max(len(d["faces"]) for d in dataset if "faces" in d)
+# max_seq =  max_length * 6
+# print(max_length)
+# print(max_seq)
+# transformer = MeshTransformer(
+#     autoencoder,
+#     dim = 16,
+#     max_seq_len = max_seq,
+#     #condition_on_text = True
+# )
  
  
-trainer = MeshTransformerTrainer(model = transformer,warmup_steps = 10, dataset = dataset,learning_rate = 1e-2,batch_size=1,grad_accum_every=1,num_train_steps=1)
-trainer.train(10)
+# trainer = MeshTransformerTrainer(model = transformer,warmup_steps = 10, dataset = dataset,learning_rate = 1e-2,batch_size=1,grad_accum_every=1,num_train_steps=1)
+# trainer.train(10)
