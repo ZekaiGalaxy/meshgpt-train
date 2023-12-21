@@ -77,7 +77,7 @@ def augment_mesh(vertices, scale_factor):
 
 def load_models(directory, variations):
     obj_datas = []  
-    for checklist in tqdm(os.listdir(directory)[:100]):  
+    for checklist in tqdm(os.listdir(directory)):  
         for filename in os.listdir(os.path.join(directory, checklist,'models')):
             if (filename.endswith(".obj") or  filename.endswith(".glb") or  filename.endswith(".off")):
                 file_path = os.path.join(directory, checklist,'models',filename)
