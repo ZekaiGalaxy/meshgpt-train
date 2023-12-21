@@ -151,7 +151,7 @@ class MeshAutoencoderTrainer(Module):
 
         self.model = model
 
-        if self.is_main():
+        if self.is_main:
             self.ema_model = EMA(model, **ema_kwargs)
 
         self.optimizer = get_optimizer(model.parameters(), lr = learning_rate, wd = weight_decay, **optimizer_kwargs)
