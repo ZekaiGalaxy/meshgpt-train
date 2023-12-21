@@ -109,8 +109,8 @@ def load_json(file,num_examples):
 
 import json
 # table
-tables = load_models("/f_ndata/zekai/ShapeNetCore.v2/04379243",9)  
+tables = load_models("/f_ndata/zekai/ShapeNetCore.v2/04379243",0)  
 print(len(tables))
 
-with open("/f_ndata/zekai/ShapeNetCore.v2/table_aug10.json", "w") as json_file:
+with open("/f_ndata/zekai/ShapeNetCore.v2/table_noaug.json", "w") as json_file:
    json.dump(tables, json_file)
