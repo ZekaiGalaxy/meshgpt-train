@@ -94,7 +94,7 @@ class MeshDataset(Dataset):
 
         print(obj_file_path)
 
-tables = load_json("/f_ndata/zekai/ShapeNetCore.v2/table.json",4)
+tables = load_json("/f_ndata/zekai/ShapeNetCore.v2/table.json",1)
 dataset = MeshDataset(tables) 
 
 autoencoder = MeshAutoencoder( 
@@ -116,7 +116,7 @@ autoencoder_trainer = MeshAutoencoderTrainer(model =autoencoder,learning_rate = 
                                              warmup_steps = 10,
                                              dataset = dataset,   
                                              num_train_steps=100,
-                                             batch_size=64,
+                                             batch_size=16,
                                              grad_accum_every=1)
 
 loss = autoencoder_trainer.train(40,stop_at_loss = 0.25)   
@@ -125,7 +125,7 @@ autoencoder_trainer = MeshAutoencoderTrainer(model =autoencoder,learning_rate = 
                                              dataset = dataset,
                                              checkpoint_every_epoch = 20,  
                                              num_train_steps=100,
-                                             batch_size=64,
+                                             batch_size=16,
                                              grad_accum_every=1)
 
 loss = autoencoder_trainer.train(200,stop_at_loss = 0.25)   
