@@ -98,10 +98,7 @@ tables = load_json("/f_ndata/zekai/ShapeNetCore.v2/table.json",1)
 dataset = MeshDataset(tables) 
 
 autoencoder = MeshAutoencoder( 
-    dim = 512,
-    encoder_depth = 6,
-    decoder_depth = 6,
-    num_discrete_coors = 128
+    dim = 512
 ) 
 total_params = sum(p.numel() for p in autoencoder.encoders.parameters())
 print(f"encoders Total parameters: {total_params}")
