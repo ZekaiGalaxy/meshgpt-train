@@ -412,6 +412,11 @@ class MeshAutoencoderTrainer(Module):
                 
 
                 with self.accelerator.autocast():
+                    loss, (recon_loss, commit_loss) = self.model(
+                        vertices = forward_kwargs['vertices'], 
+                        faces= forward_kwargs['faces'],
+                        return_loss_breakdown = True
+                    )
                     loss = self.model(vertices = forward_kwargs['vertices'], faces= forward_kwargs['faces'])
                     self.accelerator.backward(loss)
                 
