@@ -38,10 +38,10 @@ from vector_quantize_pytorch import (
 from meshgpt_pytorch.data import derive_face_edges_from_faces
 from meshgpt_pytorch.version import __version__
 
-from classifier_free_guidance_pytorch import (
-    classifier_free_guidance,
-    TextEmbeddingReturner
-)
+# from classifier_free_guidance_pytorch import (
+#     classifier_free_guidance,
+#     TextEmbeddingReturner
+# )
 
 from torch_geometric.nn.conv import SAGEConv
 
@@ -961,12 +961,12 @@ class MeshTransformer(Module):
 
         cross_attn_dim_context = None
 
-        if condition_on_text:
-            self.conditioner = TextEmbeddingReturner(
-                model_types = text_condition_model_types,
-                cond_drop_prob = text_condition_cond_drop_prob
-            )
-            cross_attn_dim_context = self.conditioner.dim_latent
+        # if condition_on_text:
+        #     self.conditioner = TextEmbeddingReturner(
+        #         model_types = text_condition_model_types,
+        #         cond_drop_prob = text_condition_cond_drop_prob
+        #     )
+        #     cross_attn_dim_context = self.conditioner.dim_latent
 
         # for summarizing the vertices of each face
 
@@ -1171,7 +1171,7 @@ class MeshTransformer(Module):
 
         return self.forward_on_codes(codes, cache = cache, **kwargs)
 
-    @classifier_free_guidance
+    # @classifier_free_guidance
     def forward_on_codes(
         self,
         codes = None,
