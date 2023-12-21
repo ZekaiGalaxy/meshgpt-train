@@ -262,21 +262,22 @@ class MeshAutoencoderTrainer(Module):
         return self.accelerator.print(msg)
 
     def save(self, path, overwrite = True):
-        path = Path(path)
-        assert overwrite or not path.exists()
+        if self.is_main:
+            path = Path(path)
+            assert overwrite or not path.exists()
 
-        pkg = dict(
-            model = self.unwrapped_model.state_dict(),
-            ema_model = self.ema_model.state_dict(),
-            optimizer = self.optimizer.state_dict(),
-            warmup = self.warmup.state_dict(),
-            scheduler = self.scheduler.state_dict(),
-            version = __version__,
-            step = self.step.item(),
-            config = self.unwrapped_model._config
-        )
+            pkg = dict(
+                model = self.unwrapped_model.state_dict(),
+                ema_model = self.ema_model.state_dict(),
+                optimizer = self.optimizer.state_dict(),
+                warmup = self.warmup.state_dict(),
+                scheduler = self.scheduler.state_dict(),
+                version = __version__,
+                step = self.step.item(),
+                config = self.unwrapped_model._config
+            )
 
-        torch.save(pkg, str(path))
+            torch.save(pkg, str(path))
 
     def load(self, path):
         path = Path(path)
