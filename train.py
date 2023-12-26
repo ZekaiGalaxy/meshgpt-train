@@ -45,7 +45,7 @@ class MeshDataset(Dataset):
         return self.data[idx]
 
 def load_data():
-    tables = load_obj_from_json("/f_ndata/zekai/ShapeNetCore.v2/table.json")
+    tables = load_obj_from_json("/f_ndata/zekai/ShapeNetCore.v2/table100.json")
     dataset = MeshDataset(tables) 
     return dataset
 
