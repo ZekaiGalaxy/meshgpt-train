@@ -122,3 +122,5 @@ def generate(transformer, path):
     # path = f'./tests/3d_output_{text}.obj'
     with open(path, "w") as f:
         f.write(obj)
+    
+generate(transformer, 'test_generate.obj')
