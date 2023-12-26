@@ -53,7 +53,7 @@ def load_autoencoder():
     autoencoder = MeshAutoencoder( 
         dim = 512,
         use_residual_lfq = False,
-        commit_loss_weight = 0.01
+        commit_loss_weight = 0.1
     )   
     return autoencoder
 
