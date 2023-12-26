@@ -81,12 +81,12 @@ autoencoder_trainer = MeshAutoencoderTrainer(
     warmup_steps = 10,
     dataset = dataset,  
     checkpoint_every_epoch = 20, 
-    batch_size=16,
-    grad_accum_every=4,
+    batch_size=8,
+    grad_accum_every=1,
     num_train_steps = 100
 )
 
-loss = autoencoder_trainer.train(num_epochs = 1)   
+loss = autoencoder_trainer.train(num_epochs = 160)   
 autoencoder_trainer.save(f'checkpoints/autoencoder_final.pt') 
 
 
@@ -98,10 +98,10 @@ gpt_trainer = MeshTransformerTrainer(
     dataset = dataset,  
     checkpoint_every_epoch = 20, 
     batch_size=4,
-    grad_accum_every=16,
+    grad_accum_every=2,
     num_train_steps = 100
 ) 
-loss = gpt_trainer.train(num_epochs = 1)  
+loss = gpt_trainer.train(num_epochs = 160)  
 
 gpt_trainer.save(f'checkpoints/autoencoder_final.pt')
 
@@ -123,4 +123,4 @@ def generate(transformer, path):
     with open(path, "w") as f:
         f.write(obj)
     
-generate(transformer, 'test_generate.obj')
+# generate(transformer, 'test_generate.obj')
