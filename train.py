@@ -26,8 +26,8 @@ def load_obj_from_json(path):
     with open(path, "r") as json_file:
         loaded_data = json.load(json_file) 
         for item in loaded_data:
-            if len(item['faces']) >= 512:
-                continue
+            # if len(item['faces']) >= 512:
+            #     continue
             obj_data = {"vertices": torch.tensor(item["vertices"], dtype=torch.float), "faces":  torch.tensor(item["faces"], dtype=torch.long),"texts": item["texts"]} 
             obj_datas.append(obj_data)
     return obj_datas
@@ -58,10 +58,10 @@ def load_autoencoder():
     return autoencoder
 
 def load_gpt2(autoencoder):
-    # max_length =  max(len(d["faces"]) for d in dataset if "faces" in d) 
-    # max_seq =  max_length * 6  
+    max_length =  max(len(d["faces"]) for d in dataset if "faces" in d) 
+    max_seq =  max_length * 6  
     # print(f'GPT2 max length: {max_seq}')
-    max_seq = 512*6
+    # max_seq = 512*6
     transformer = MeshTransformer(
         autoencoder,
         dim = 768,
