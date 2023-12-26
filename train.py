@@ -67,6 +67,10 @@ def load_gpt2(autoencoder):
     )
     return transformer
 
+dataset = load_data()
+autoencoder = load_autoencoder()
+transformer = load_gpt2(autoencoder)
+
 # train autoencoder
 autoencoder_trainer = MeshAutoencoderTrainer(
     model = autoencoder,
