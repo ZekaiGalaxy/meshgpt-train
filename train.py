@@ -77,12 +77,12 @@ transformer = load_gpt2(autoencoder)
 # train autoencoder
 autoencoder_trainer = MeshAutoencoderTrainer(
     model = autoencoder,
-    learning_rate = 5e-4, 
+    learning_rate = 1e-3, 
     warmup_steps = 10,
     dataset = dataset,  
     checkpoint_every_epoch = 20, 
-    batch_size=16,
-    grad_accum_every=4,
+    batch_size=2,
+    grad_accum_every=1,
     num_train_steps = 100
 )
 
