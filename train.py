@@ -26,6 +26,8 @@ def load_obj_from_json(path):
     with open(path, "r") as json_file:
         loaded_data = json.load(json_file) 
         for item in loaded_data:
+            if len(item['faces']) >= 512:
+                continue
             obj_data = {"vertices": torch.tensor(item["vertices"], dtype=torch.float), "faces":  torch.tensor(item["faces"], dtype=torch.long),"texts": item["texts"]} 
             obj_datas.append(obj_data)
     return obj_datas
