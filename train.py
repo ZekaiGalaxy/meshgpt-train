@@ -59,7 +59,7 @@ def load_gpt2(autoencoder):
     # max_length =  max(len(d["faces"]) for d in dataset if "faces" in d) 
     # max_seq =  max_length * 6  
     # print(f'GPT2 max length: {max_seq}')
-    max_seq = 4096
+    max_seq = 512*6
     transformer = MeshTransformer(
         autoencoder,
         dim = 768,
