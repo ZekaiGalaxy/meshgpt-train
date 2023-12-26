@@ -56,9 +56,10 @@ def load_autoencoder():
     return autoencoder
 
 def load_gpt2(autoencoder):
-    max_length =  max(len(d["faces"]) for d in dataset if "faces" in d) 
-    max_seq =  max_length * 6  
-    print(f'GPT2 max length: {max_seq}')
+    # max_length =  max(len(d["faces"]) for d in dataset if "faces" in d) 
+    # max_seq =  max_length * 6  
+    # print(f'GPT2 max length: {max_seq}')
+    max_seq = 4096
     transformer = MeshTransformer(
         autoencoder,
         dim = 768,
@@ -94,8 +95,8 @@ gpt_trainer = MeshTransformerTrainer(
     warmup_steps = 10,
     dataset = dataset,  
     checkpoint_every_epoch = 20, 
-    batch_size=8,
-    grad_accum_every=8,
+    batch_size=4,
+    grad_accum_every=16,
     num_train_steps = 100
 ) 
 loss = gpt_trainer.train(num_epochs = 1)  
