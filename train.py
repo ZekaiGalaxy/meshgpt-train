@@ -54,7 +54,7 @@ def load_autoencoder():
         dim = 512,
         use_residual_lfq = True,
         commit_loss_weight = 0.1,
-        bin_smooth_blur_sigma = -1
+        bin_smooth_blur_sigma = 0.4
     )   
     return autoencoder
 

@@ -418,6 +418,7 @@ class MeshAutoencoderTrainer(Module):
                         return_loss_breakdown = True
                     )
                     # loss = self.model(vertices = forward_kwargs['vertices'], faces= forward_kwargs['faces'])
+                    loss.requires_grad = True
                     self.accelerator.backward(loss)
                 
                 self.print(f'recon loss: {recon_loss.item():.3f} | commit loss: {commit_loss.sum().item():.3f}')
