@@ -80,7 +80,6 @@ autoencoder_trainer = MeshAutoencoderTrainer(
     checkpoint_every_epoch = 20, 
     batch_size=16,
     grad_accum_every=4,
-    use_wandb_tracking=True,
     num_train_steps = 100
 )
 
@@ -95,9 +94,8 @@ gpt_trainer = MeshTransformerTrainer(
     warmup_steps = 10,
     dataset = dataset,  
     checkpoint_every_epoch = 20, 
-    batch_size=16,
-    grad_accum_every=4,
-    use_wandb_tracking=True,
+    batch_size=8,
+    grad_accum_every=8,
     num_train_steps = 100
 ) 
 loss = gpt_trainer.train(num_epochs = 1)  
