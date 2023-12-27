@@ -12,6 +12,8 @@ from tqdm import tqdm
 import numpy as np
 import torch
 import json
+from einops import rearrange, repeat, reduce, pack, unpack
+from einops.layers.torch import Rearrange
 
 from meshgpt_pytorch import (
     MeshTransformerTrainer,
@@ -19,6 +21,7 @@ from meshgpt_pytorch import (
     MeshAutoencoder,
     MeshTransformer
 )
+from meshgpt_pytorch.data import derive_face_edges_from_faces
 
 
 def load_obj_from_json(path):
@@ -45,7 +48,7 @@ class MeshDataset(Dataset):
         return self.data[idx]
 
 def load_data():
-    tables = load_obj_from_json("/f_ndata/zekai/ShapeNetCore.v2/table100.json")
+    tables = load_obj_from_json("/f_ndata/zekai/ShapeNetCore.v2/table_noaug.json")
     dataset = MeshDataset(tables) 
     return dataset
 
@@ -75,36 +78,57 @@ dataset = load_data()
 autoencoder = load_autoencoder()
 transformer = load_gpt2(autoencoder)
 
-# train autoencoder
-autoencoder_trainer = MeshAutoencoderTrainer(
-    model = autoencoder,
-    learning_rate = 1e-3, 
-    warmup_steps = 10,
-    dataset = dataset,  
-    checkpoint_every_epoch = 20, 
-    batch_size=2,
-    grad_accum_every=1,
-    num_train_steps = 100
-)
 
-loss = autoencoder_trainer.train(num_epochs = 160)   
-autoencoder_trainer.save(f'checkpoints/autoencoder_final.pt') 
+def check_tokenize(autoencoder):
+    data_sample = dataset[0]
+
+    codes = autoencoder.tokenize(
+        vertices = data_sample['vertices'],
+        faces = data_sample['faces']
+    )
+
+    codes = codes.reshape(data_sample['faces'].shape[0],3,2)
+    print(f"Codes: {codes.shape}")
+
+    continuous_coors, pred_face_coords, face_mask = autoencoder.decode_from_codes_to_faces(mesh_token_ids, return_discrete_codes = True)
+    pred_face_coords = pred_face_coords.squeeze(1)
+    print(f"Label Faces: {face_coordinates.shape}")
+    print(face_coordinates)
+    print(f"Pred Faces: {pred_face_coords.shape}")
+    print(pred_face_coords)
+
+check_tokenize(autoencoder)
+
+# # train autoencoder
+# autoencoder_trainer = MeshAutoencoderTrainer(
+#     model = autoencoder,
+#     learning_rate = 1e-3, 
+#     warmup_steps = 10,
+#     dataset = dataset,  
+#     checkpoint_every_epoch = 20, 
+#     batch_size=16,
+#     grad_accum_every=1,
+#     num_train_steps = 100
+# )
+
+# loss = autoencoder_trainer.train(num_epochs = 160)   
+# autoencoder_trainer.save(f'checkpoints/autoencoder_final.pt') 
 
 
-# train gpt2
-gpt_trainer = MeshTransformerTrainer(
-    model = transformer,
-    learning_rate = 5e-4, 
-    warmup_steps = 10,
-    dataset = dataset,  
-    checkpoint_every_epoch = 20, 
-    batch_size=4,
-    grad_accum_every=16,
-    num_train_steps = 100
-) 
-loss = gpt_trainer.train(num_epochs = 160)  
+# # train gpt2
+# gpt_trainer = MeshTransformerTrainer(
+#     model = transformer,
+#     learning_rate = 5e-4, 
+#     warmup_steps = 10,
+#     dataset = dataset,  
+#     checkpoint_every_epoch = 20, 
+#     batch_size=4,
+#     grad_accum_every=16,
+#     num_train_steps = 100
+# ) 
+# loss = gpt_trainer.train(num_epochs = 160)  
 
-gpt_trainer.save(f'checkpoints/autoencoder_final.pt')
+# gpt_trainer.save(f'checkpoints/autoencoder_final.pt')
 
 
 
@@ -113,14 +137,11 @@ def generate(transformer, path):
     coords = transformer.generate() 
     tensor_data = coords[0].cpu()
     numpy_data = tensor_data.numpy().reshape(-1, 3)
-    
     for v in numpy_data:
         obj += f"v {v[0]} {v[1]} {v[2]}\n"
-
     for i in range(1, len(numpy_data), 3):
         obj += f"f {i} {i + 1} {i + 2}\n"
 
-    # path = f'./tests/3d_output_{text}.obj'
     with open(path, "w") as f:
         f.write(obj)
     
