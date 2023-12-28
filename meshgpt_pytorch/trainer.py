@@ -288,13 +288,14 @@ class MeshAutoencoderTrainer(Module):
         if version.parse(__version__) != version.parse(pkg['version']):
             self.print(f'loading saved mesh autoencoder at version {pkg["version"]}, but current package version is {__version__}')
 
-        self.model.load_state_dict(pkg['model'])
-        self.ema_model.load_state_dict(pkg['ema_model'])
-        self.optimizer.load_state_dict(pkg['optimizer'])
-        self.warmup.load_state_dict(pkg['warmup'])
-        self.scheduler.load_state_dict(pkg['scheduler'])
+        if self.is_main:
+            self.model.load_state_dict(pkg['model'])
+            self.ema_model.load_state_dict(pkg['ema_model'])
+            self.optimizer.load_state_dict(pkg['optimizer'])
+            self.warmup.load_state_dict(pkg['warmup'])
+            self.scheduler.load_state_dict(pkg['scheduler'])
 
-        self.step.copy_(pkg['step'])
+            self.step.copy_(pkg['step'])
 
     def next_data_to_forward_kwargs(self, dl_iter) -> dict:
         data = next(dl_iter)
@@ -418,7 +419,7 @@ class MeshAutoencoderTrainer(Module):
                         return_loss_breakdown = True
                     )
                     # loss = self.model(vertices = forward_kwargs['vertices'], faces= forward_kwargs['faces'])
-                    loss.requires_grad = True
+                    # loss.requires_grad = True
                     self.accelerator.backward(loss)
                 
                 self.print(f'recon loss: {recon_loss.item():.3f} | commit loss: {commit_loss.sum().item():.3f}')
@@ -465,6 +466,29 @@ class MeshAutoencoderTrainer(Module):
             plt.grid(True)
             plt.show()
         return epoch_losses[-1]
+    
+    def eval(self, data):
+        # use autoencoder to encode the data and get the codes, then use decode_from_codes_to_faces to get the reconstruction results
+        # then put the label and reconstruction results together to visualize
+        # code starts:
+        self.model.eval()
+        codes = self.model.tokenize(data['vertices'], data['faces'])
+        face_coords, face_mask = self.autoencoder.decode_from_codes_to_faces(codes)
+
+        if not exists(face_coords_to_file):
+            return face_coords, face_mask
+
+        files = [face_coords_to_file(coords[mask]) for coords, mask in zip(face_coords, face_mask)]
+        return files
+
+        faces_coordinates, face_mask = self.model.decode_from_codes_to_faces(codes)
+        faces_coordinates = faces_coordinates[0].cpu()
+        face_mask = face_mask[0].cpu()
+        faces_coordinates = faces_coordinates[face_mask]
+        faces_coordinates = faces_coordinates.reshape(-1, 3)
+        # code ends
+
+        return self.model.decode_from_codes_to_faces(codes)
 # mesh transformer trainer
 
 class MeshTransformerTrainer(Module):
@@ -652,11 +676,12 @@ class MeshTransformerTrainer(Module):
         if version.parse(__version__) != version.parse(pkg['version']):
             self.print(f'loading saved mesh transformer at version {pkg["version"]}, but current package version is {__version__}')
 
-        self.model.load_state_dict(pkg['model'])
-        self.optimizer.load_state_dict(pkg['optimizer'])
-        self.scheduler.load_state_dict(pkg['scheduler'])
-        self.warmup.load_state_dict(pkg['warmup'])
-        self.step.copy_(pkg['step'])
+        if self.is_main:
+            self.model.load_state_dict(pkg['model'])
+            self.optimizer.load_state_dict(pkg['optimizer'])
+            self.scheduler.load_state_dict(pkg['scheduler'])
+            self.warmup.load_state_dict(pkg['warmup'])
+            self.step.copy_(pkg['step'])
 
     def forward(self):
         step = self.step.item()

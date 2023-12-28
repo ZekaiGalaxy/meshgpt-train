@@ -58,6 +58,7 @@ def derive_face_edges_from_faces(
 ) -> TensorType['b', 'e', 2, int]:
 
     is_one_face, device = faces.ndim == 2, faces.device
+    faces = faces.to('cpu')
 
     if is_one_face:
         faces = rearrange(faces, 'nf c -> 1 nf c')
@@ -93,7 +94,7 @@ def derive_face_edges_from_faces(
     if is_one_face:
         face_edges = rearrange(face_edges, '1 e ij -> e ij')
 
-    return face_edges
+    return face_edges.to(device)
 
 # custom collater
 

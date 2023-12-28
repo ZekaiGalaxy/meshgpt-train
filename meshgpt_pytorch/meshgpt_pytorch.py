@@ -1098,8 +1098,7 @@ class MeshTransformer(Module):
                 text_embeds = text_embeds,
                 return_loss = False,
                 return_cache = can_cache,
-                append_eos = False,
-                cond_scale = cond_scale
+                append_eos = False
             )
 
             if can_cache:
