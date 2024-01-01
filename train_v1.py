@@ -31,6 +31,25 @@ from collections import OrderedDict
 # (64,0.01) -> 0.01 is important, can bring to 0.7
 
 
+def visualize_multiple_meshes(coords, distance=1.0, output_path="generated2.obj"):
+    all_vertices = []
+    all_faces = []
+    vertex_offset = 0
+    translation_distance = distance
+
+    for r, faces_coordinates in enumerate(coords): 
+        tensor_data = faces_coordinates[0].cpu()
+        numpy_data = tensor_data.numpy().reshape(-1, 3)
+        numpy_data[:, 0] += translation_distance * (r / 0.2 - 1)  # Adjust X coordinate
+        for vertex in numpy_data:
+            all_vertices.append(f"v {vertex[0]} {vertex[1]} {vertex[2]}\n")
+        for i in range(1, len(numpy_data), 3):
+            all_faces.append(f"f {i + vertex_offset} {i + 1 + vertex_offset} {i + 2 + vertex_offset}\n")
+        vertex_offset += len(numpy_data)
+
+    obj_file_content = "".join(all_vertices) + "".join(all_faces)
+    with open(output_path, "w") as file:
+        file.write(obj_file_content)
 
 class MeshDataset(Dataset): 
     def __init__(self, data): 
@@ -157,85 +176,54 @@ print(max_length)
 
 autoencoder = MeshAutoencoder(
     dim = 576,
-    encoder_depth = 6,
-    decoder_depth = 6,
-    num_discrete_coors = 128
+    encoder_depth = 2,
+    decoder_depth = 2,
+    num_discrete_coors = 128,
+    use_residual_lfq = False
+    # rlfq_kwargs = {"diversity_gamma": 0.4}
 )
 
-autoencoder_trainer = MeshAutoencoderTrainer(model=autoencoder,learning_rate = 1e-2, 
-                                             warmup_steps = 10,
-                                             dataset = dataset, 
-                                             checkpoint_every_epoch = 20,  
-                                             num_train_steps=100,
-                                             batch_size=8,
-                                             grad_accum_every=1) 
-loss = autoencoder_trainer.train(10 ,stop_at_loss = 1.0)   
+# autoencoder_trainer = MeshAutoencoderTrainer(model=autoencoder,learning_rate = 1e-2, 
+#                                              warmup_steps = 10,
+#                                              dataset = dataset, 
+#                                              checkpoint_every_epoch = 20,  
+#                                              num_train_steps=100,
+#                                              batch_size=16,
+#                                              grad_accum_every=2) 
+# loss = autoencoder_trainer.train(10 ,stop_at_loss = 1.0)   
 
-autoencoder_trainer = MeshAutoencoderTrainer(model=autoencoder,learning_rate = 5e-3, 
+autoencoder_trainer = MeshAutoencoderTrainer(model=autoencoder,learning_rate = 1e-3, 
                                              warmup_steps = 10,
                                              dataset = dataset, 
                                              checkpoint_every_epoch = 20,  
                                              num_train_steps=100,
                                              batch_size=16,
-                                             grad_accum_every=2) 
-loss = autoencoder_trainer.train(10 ,stop_at_loss = 0.35)   
+                                             grad_accum_every=1) 
+loss = autoencoder_trainer.train(200 ,stop_at_loss = 0.10)   
 
-max_length =  max(len(d["faces"]) for d in dataset if "faces" in d) 
-max_seq =  max_length * 6   
-transformer = MeshTransformer(
-    autoencoder,
-    dim = 512,
-    coarse_pre_gateloop_depth = 6,
-    fine_pre_gateloop_depth= 4, 
-    max_seq_len = max_seq, 
-)
- 
-# dataset.generate_codes(autoencoder)
-# test_autoencoder
-# codes: [B,F*3,2]
+# max_length =  max(len(d["faces"]) for d in dataset if "faces" in d) 
+# max_seq =  max_length * 6   
+# transformer = MeshTransformer(
+#     autoencoder,
+#     dim = 512,
+#     coarse_pre_gateloop_depth = 6,
+#     fine_pre_gateloop_depth= 4, 
+#     max_seq_len = max_seq, 
+# )
 
-###
-self.autoencoder.eval()
-face_coords, face_mask = self.autoencoder.decode_from_codes_to_faces(codes)
+# ###
 
-face_coords = [face_coords_to_file(coords[mask]) for coords, mask in zip(face_coords, face_mask)]
+# trainer = MeshTransformerTrainer(model = transformer,warmup_steps = 10,grad_accum_every=1,num_train_steps=100, dataset = dataset, learning_rate = 1e-1, batch_size=8 , checkpoint_every_epoch=5)
+# loss = trainer.train(10 ,stop_at_loss = 4e-3) 
 
+# trainer = MeshTransformerTrainer(model = transformer,warmup_steps = 10,grad_accum_every=1,num_train_steps=100, dataset = dataset, learning_rate = 5e-3, batch_size=8 , checkpoint_every_epoch=5)
+# loss = trainer.train(15 ,stop_at_loss = 2e-3) 
 
-###
+# trainer = MeshTransformerTrainer(model = transformer,warmup_steps = 10,grad_accum_every=1,num_train_steps=100, dataset = dataset, learning_rate = 1e-3, batch_size=8 , checkpoint_every_epoch=5)
+# loss = trainer.train(10 ,stop_at_loss = 1e-3) 
 
-trainer = MeshTransformerTrainer(model = transformer,warmup_steps = 10,grad_accum_every=1,num_train_steps=100, dataset = dataset, learning_rate = 1e-1, batch_size=8 , checkpoint_every_epoch=5)
-loss = trainer.train(10 ,stop_at_loss = 4e-3) 
-
-trainer = MeshTransformerTrainer(model = transformer,warmup_steps = 10,grad_accum_every=1,num_train_steps=100, dataset = dataset, learning_rate = 5e-3, batch_size=8 , checkpoint_every_epoch=5)
-loss = trainer.train(15 ,stop_at_loss = 2e-3) 
-
-trainer = MeshTransformerTrainer(model = transformer,warmup_steps = 10,grad_accum_every=1,num_train_steps=100, dataset = dataset, learning_rate = 1e-3, batch_size=8 , checkpoint_every_epoch=5)
-loss = trainer.train(10 ,stop_at_loss = 1e-3) 
-
-coords = []
-for r in np.arange(0, 1.0, 0.2):
-    print(r)
-    faces_coordinates = transformer.generate(temperature=r) 
-    coords.append(faces_coordinates) 
-
-
-
-def visualize_multiple_meshes(coords, distance=1.0, output_path="generated2.obj"):
-    all_vertices = []
-    all_faces = []
-    vertex_offset = 0
-    translation_distance = distance
-
-    for r, faces_coordinates in enumerate(coords): 
-        tensor_data = faces_coordinates[0].cpu()
-        numpy_data = tensor_data.numpy().reshape(-1, 3)
-        numpy_data[:, 0] += translation_distance * (r / 0.2 - 1)  # Adjust X coordinate
-        for vertex in numpy_data:
-            all_vertices.append(f"v {vertex[0]} {vertex[1]} {vertex[2]}\n")
-        for i in range(1, len(numpy_data), 3):
-            all_faces.append(f"f {i + vertex_offset} {i + 1 + vertex_offset} {i + 2 + vertex_offset}\n")
-        vertex_offset += len(numpy_data)
-
-    obj_file_content = "".join(all_vertices) + "".join(all_faces)
-    with open(output_path, "w") as file:
-        file.write(obj_file_content)
+# coords = []
+# for r in np.arange(0, 1.0, 0.2):
+#     print(r)
+#     faces_coordinates = transformer.generate(temperature=r) 
+#     coords.append(faces_coordinates) 

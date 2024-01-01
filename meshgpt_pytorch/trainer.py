@@ -38,6 +38,30 @@ DEFAULT_DDP_KWARGS = DistributedDataParallelKwargs(
     find_unused_parameters = True
 )
 
+def convert_face_to_tensor(vertices, faces):
+    faces_coordinates = vertices[faces]
+    return faces_coordinates
+
+def visualize_multiple_meshes(coords, distance=1.0, output_path="generated2.obj"):
+    all_vertices = []
+    all_faces = []
+    vertex_offset = 0
+    translation_distance = distance
+
+    for r, faces_coordinates in enumerate(coords): 
+        tensor_data = faces_coordinates.cpu()
+        numpy_data = tensor_data.numpy().reshape(-1, 3)
+        numpy_data[:, 0] += translation_distance * (r / 0.2 - 1)  # Adjust X coordinate
+        for vertex in numpy_data:
+            all_vertices.append(f"v {vertex[0]} {vertex[1]} {vertex[2]}\n")
+        for i in range(1, len(numpy_data), 3):
+            all_faces.append(f"f {i + vertex_offset} {i + 1 + vertex_offset} {i + 2 + vertex_offset}\n")
+        vertex_offset += len(numpy_data)
+
+    obj_file_content = "".join(all_vertices) + "".join(all_faces)
+    with open(output_path, "w") as file:
+        file.write(obj_file_content)
+
 # helper functions
 
 def exists(v):
@@ -162,6 +186,8 @@ class MeshAutoencoderTrainer(Module):
             self.scheduler = scheduler(self.optimizer, **scheduler_kwargs)
         else:
             self.scheduler = ConstantLRScheduler(self.optimizer)
+
+        self.eval_data = dataset[0]
 
         self.dataloader = DataLoader(
             dataset,
@@ -397,6 +423,7 @@ class MeshAutoencoderTrainer(Module):
     def train(self, num_epochs, stop_at_loss = None, diplay_graph = False):
         epoch_losses = []  # Initialize a list to store epoch losses
         self.model.train() 
+        avg_epoch_loss = 0.0
         for epoch in range(num_epochs): 
             total_loss = 0.0
             num_batches = 0
@@ -446,6 +473,9 @@ class MeshAutoencoderTrainer(Module):
             self.print(f'Epoch {epoch + 1} average loss: {avg_epoch_loss}')
             self.wait()
 
+            if self.is_main and epoch % 1 == 0:
+                self.eval(epoch, avg_epoch_loss)
+
             if self.checkpoint_every_epoch is not None and epoch != 0 and epoch % self.checkpoint_every_epoch == 0:
                 self.save(self.checkpoint_folder / f'mesh-autoencoder.ckpt.epoch_{epoch}_avg_loss_{avg_epoch_loss:.3f}.pt')
                 
@@ -467,28 +497,28 @@ class MeshAutoencoderTrainer(Module):
             plt.show()
         return epoch_losses[-1]
     
-    def eval(self, data):
-        # use autoencoder to encode the data and get the codes, then use decode_from_codes_to_faces to get the reconstruction results
-        # then put the label and reconstruction results together to visualize
-        # code starts:
+    def eval(self, epoch, loss):
+        data = self.eval_data
         self.model.eval()
-        codes = self.model.tokenize(data['vertices'], data['faces'])
-        face_coords, face_mask = self.autoencoder.decode_from_codes_to_faces(codes)
-
-        if not exists(face_coords_to_file):
-            return face_coords, face_mask
-
-        files = [face_coords_to_file(coords[mask]) for coords, mask in zip(face_coords, face_mask)]
-        return files
-
-        faces_coordinates, face_mask = self.model.decode_from_codes_to_faces(codes)
-        faces_coordinates = faces_coordinates[0].cpu()
-        face_mask = face_mask[0].cpu()
-        faces_coordinates = faces_coordinates[face_mask]
-        faces_coordinates = faces_coordinates.reshape(-1, 3)
-        # code ends
-
-        return self.model.decode_from_codes_to_faces(codes)
+        # aggregate data:
+        # vertices = torch.stack([d['vertices'] for d in data])
+        # faces = torch.stack([d['faces'] for d in data])
+        try:
+            codes = self.model.tokenize(data['vertices'], data['faces'])
+            codes = codes.unsqueeze(0)
+            face_coords, face_mask = self.model.decode_from_codes_to_faces(codes)
+        except:
+            codes = self.model.module.tokenize(data['vertices'], data['faces'])
+            codes = codes.unsqueeze(0)
+            face_coords, face_mask = self.model.module.decode_from_codes_to_faces(codes)
+        generated = [coords[mask] for coords, mask in zip(face_coords, face_mask)]
+        # transformed = []
+        # for d in data:
+        #     transformed.append(convert_face_to_tensor(d['vertices'], d['faces']))
+        transformed = [convert_face_to_tensor(data['vertices'], data['faces'])]
+        visualize_multiple_meshes(transformed + generated, distance=1.0, output_path=f"eval/{epoch}_{loss}.obj")
+        self.model.train()
+        
 # mesh transformer trainer
 
 class MeshTransformerTrainer(Module):

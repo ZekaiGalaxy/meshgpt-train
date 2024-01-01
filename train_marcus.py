@@ -148,14 +148,7 @@ for file in tqdm(sorted(os.listdir(base_path))[:1000]):
         break
 
 def convert_face_to_tensor(vertices, faces):
-    # aggregate vertices into faces
-    # for example:
-    # faces = [[0, 1, 2], [1, 2, 3]]
-    # vertices = [[0, 0, 0], [1, 1, 1], [2, 2, 2], [3, 3, 3]]
-    # faces_coordinates = [[[0, 0, 0], [1, 1, 1], [2, 2, 2]], [[1, 1, 1], [2, 2, 2], [3, 3, 3]]]
     faces_coordinates = vertices[faces]
-    
-
 
 dataset = MeshDataset(obj_data)
 dataset.generate_face_edges()
